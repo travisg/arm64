@@ -1,0 +1,12 @@
+build-*
+*.swp
+*~
+tags
+TAGS
+cscope.out
+local.mk
+*.orig
+cscope.*
+doit
+t
+tagit
