@@ -3,8 +3,8 @@ TARGET := test
 BUILDDIR := build-$(TARGET)
 
 # compiler flags, default libs to link against
-COMPILEFLAGS := -g -O2
-CFLAGS :=
+COMPILEFLAGS := -g -O2 -Iinclude -finline
+CFLAGS := -std=c99
 CPPFLAGS :=
 ASMFLAGS :=
 LDFLAGS :=
@@ -29,7 +29,7 @@ CFLAGS += $(COMPILEFLAGS)
 CPPFLAGS += $(COMPILEFLAGS)
 ASMFLAGS += $(COMPILEFLAGS)
 
-OBJS := test.o asm.o
+OBJS := test.o asm.o printf.o strlen.o stdio.o
 
 OBJS := $(addprefix $(BUILDDIR)/,$(OBJS))
 
@@ -54,23 +54,28 @@ spotless:
 run: $(BUILDDIR)/$(TARGET)
 	./Foundation_v8 --visualization --image $<
 
+runvm: $(BUILDDIR)/$(TARGET)
+	scp $(BUILDDIR)/$(TARGET) xubuntu:.
+	ssh xubuntu Foundation_v8pkg/models/Linux64_GCC-4.1/Foundation_v8 --visualization --image $(TARGET); \
+	ssh xubuntu killall Foundation_v8
+
 # makes sure the target dir exists
 MKDIR = if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
 
 $(BUILDDIR)/%.o: %.c
 	@$(MKDIR)
 	@echo compiling $<
-	$(CC) $(CFLAGS) -c $< -MD -MT $@ -MF $(@:%o=%d) -o $@
+	@$(CC) $(CFLAGS) -c $< -MD -MT $@ -MF $(@:%o=%d) -o $@
 
 $(BUILDDIR)/%.o: %.cpp
 	@$(MKDIR)
 	@echo compiling $<
-	$(CC) $(CPPFLAGS) -c $< -MD -MT $@ -MF $(@:%o=%d) -o $@
+	@$(CC) $(CPPFLAGS) -c $< -MD -MT $@ -MF $(@:%o=%d) -o $@
 
 $(BUILDDIR)/%.o: %.S
 	@$(MKDIR)
 	@echo compiling $<
-	$(CC) $(ASMFLAGS) -c $< -MD -MT $@ -MF $(@:%o=%d) -o $@
+	@$(CC) $(ASMFLAGS) -c $< -MD -MT $@ -MF $(@:%o=%d) -o $@
 
 ifeq ($(filter $(MAKECMDGOALS), clean), )
 -include $(DEPS)

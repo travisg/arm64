@@ -11,7 +11,7 @@ FUNCTION(semihost_call)
     hlt 0xf000
     ret
 
-    .align 3
+    .align 4
 DATA(stack)
     .skip 0x2000
 DATA(stack_end)

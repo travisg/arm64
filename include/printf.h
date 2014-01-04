@@ -20,21 +20,37 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __REG_H
-#define __REG_H
+#ifndef __LIB_PRINTF_H
+#define __LIB_PRINTF_H
 
-/* low level macros for accessing memory mapped hardware registers */
-#define REG64(addr) ((volatile unsigned long *)(addr))
-#define REG32(addr) ((volatile unsigned int *)(addr))
-#define REG16(addr) ((volatile unsigned short *)(addr))
-#define REG8(addr) ((volatile unsigned char *)(addr))
+#include <stdarg.h>
+#include <compiler.h>
+#include <stddef.h>
 
-#define RMWREG64(addr, startbit, width, val) *REG64(addr) = (*REG64(addr) & ~(((1<<(width)) - 1) << (startbit))) | ((val) << (startbit))
-#define RMWREG32(addr, startbit, width, val) *REG32(addr) = (*REG32(addr) & ~(((1<<(width)) - 1) << (startbit))) | ((val) << (startbit))
-#define RMWREG16(addr, startbit, width, val) *REG16(addr) = (*REG16(addr) & ~(((1<<(width)) - 1) << (startbit))) | ((val) << (startbit))
-#define RMWREG8(addr, startbit, width, val) *REG8(addr) = (*REG8(addr) & ~(((1<<(width)) - 1) << (startbit))) | ((val) << (startbit))
+__BEGIN_CDECLS
 
-#define writel(v, a) (*REG32(a) = (v))
-#define readl(a) (*REG32(a))
+#if !DISABLE_DEBUG_OUTPUT
+#define printf(x...) _printf(x)
+#else
+static inline int __PRINTFLIKE(1, 2) printf(const char *fmt, ...) { return 0; }
+#endif
+
+int _printf(const char *fmt, ...) __PRINTFLIKE(1, 2);
+int sprintf(char *str, const char *fmt, ...) __PRINTFLIKE(2, 3);
+int snprintf(char *str, size_t len, const char *fmt, ...) __PRINTFLIKE(3, 4);
+int vsprintf(char *str, const char *fmt, va_list ap);
+int vsnprintf(char *str, size_t len, const char *fmt, va_list ap);
+
+/* printf engine that parses the format string and generates output */
+
+/* function pointer to pass the printf engine, called back during the formatting.
+ * input is a string to output, length bytes to output (or null on string),
+ * return code is number of characters that would have been written, or error code (if negative)
+ */
+typedef int (*_printf_engine_output_func)(const char *str, size_t len, void *state);
+
+int _printf_engine(_printf_engine_output_func out, void *state, const char *fmt, va_list ap);
+
+__END_CDECLS
 
 #endif
