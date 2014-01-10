@@ -11,6 +11,7 @@ FUNCTION(semihost_call)
     hlt 0xf000
     ret
 
+.bss
     .align 4
 DATA(stack)
     .skip 0x2000

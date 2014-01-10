@@ -29,7 +29,7 @@ CFLAGS += $(COMPILEFLAGS)
 CPPFLAGS += $(COMPILEFLAGS)
 ASMFLAGS += $(COMPILEFLAGS)
 
-OBJS := test.o asm.o printf.o strlen.o stdio.o
+OBJS := test.o asm.o exceptions.o printf.o strlen.o stdio.o
 
 OBJS := $(addprefix $(BUILDDIR)/,$(OBJS))
 
