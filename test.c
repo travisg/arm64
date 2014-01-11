@@ -10,6 +10,8 @@
 int a_global = 0;
 int b_global = 1;
 
+extern void arm64_exception_base(void);
+
 void main(void)
 {
     printf("welcome to arm64!\n");
@@ -17,17 +19,30 @@ void main(void)
     printf("%d %ld\n", -1, -1L);
     set_led(0x55);
 
-    printf("el 0x%x\n", arm64_read_current_el());
+    unsigned int current_el = ARM64_READ_SYSREG(CURRENTEL) >> 2;
 
-    uint64_t foo = arm64_read_VBAR_EL1();
-    printf("vtor 0x%llx\n", foo);
+    printf("el 0x%x\n", current_el);
 
-    arm64_write_VBAR_EL1(0x80000000);
-    foo = arm64_read_VBAR_EL1();
-    printf("vtor 0x%llx\n", foo);
+    ARM64_WRITE_SYSREG(VBAR_EL1, (uint64_t)&arm64_exception_base);
+    ARM64_WRITE_SYSREG(VBAR_EL2, (uint64_t)&arm64_exception_base);
+    ARM64_WRITE_SYSREG(VBAR_EL3, (uint64_t)&arm64_exception_base);
+
+    printf("before svc\n");
+    __asm__ volatile("svc #99");
+    printf("after svc\n");
+
+    printf("%d\n", longargs(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
 
     for (;;)
         __asm__ volatile("wfi");
+}
+
+void sync_exception(void)
+{
+    printf("sync_exception\n");
+
+    for (;;)
+        ;
 }
 
 int foo(int a, int b)
@@ -38,4 +53,9 @@ int foo(int a, int b)
 long foo64(long a, long b)
 {
     return a + b;
+}
+
+__NO_INLINE int longargs(int a, int b, int c, int d, int e, int f, int g, int h, int i)
+{
+    return a + b + c + d + e + f + g + h + i;
 }

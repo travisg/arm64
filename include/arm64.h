@@ -2,28 +2,19 @@
 
 #include <stdint.h>
 
-#define ISB
+#define DSB __asm__ volatile("dsb" ::: "memory")
+#define ISB __asm__ volatile("isb" ::: "memory")
 
-#define GEN_SYS_REG_FUNCS(reg) \
-static inline __ALWAYS_INLINE uint64_t arm64_read_##reg(void) { \
-    uint64_t val; \
-    __asm__ volatile("mrs %0," #reg : "=r" (val)); \
-    return val; \
-} \
-\
-static inline __ALWAYS_INLINE void arm64_write_##reg(uint64_t val) { \
-    __asm__ volatile("msr " #reg ", %0" : "=r" (val)); \
+#define ARM64_READ_SYSREG(reg) \
+({ \
+    uint64_t _val; \
+    __asm__ volatile("mrs %0," #reg : "=r" (_val)); \
+    _val; \
+})
+
+#define ARM64_WRITE_SYSREG(reg, val) \
+({ \
+    __asm__ volatile("msr " #reg ", %0" :: "r" (val)); \
     ISB; \
-}
-
-GEN_SYS_REG_FUNCS(VBAR_EL1)
-GEN_SYS_REG_FUNCS(VBAR)
-
-static inline __ALWAYS_INLINE uint32_t arm64_read_current_el(void)
-{
-    uint32_t val;
-    __asm__ volatile("mrs %0,currentel" : "=r" (val));
-    return val;
-}
-
+})
 
