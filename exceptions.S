@@ -60,77 +60,85 @@ pop x28, x29
 add sp, sp, #32
 .endm
 
+.macro invalid_exception, which
+    regsave_long
+    mov x1, #\which
+    mov x0, sp
+    bl  arm64_invalid_exception
+    b   .
+.endm
+
 FUNCTION(arm64_exception_base)
 
 /* exceptions from current EL, using SP0 */
 LOCAL_FUNCTION(arm64_sync_exc_current_el_SP0)
-    eret
+    invalid_exception 0
 
 .org 0x080
 LOCAL_FUNCTION(arm64_irq_current_el_SP0)
-    eret
+    invalid_exception 1
 
 .org 0x100
 LOCAL_FUNCTION(arm64_fiq_current_el_SP0)
-    eret
+    invalid_exception 2
 
 .org 0x180
 LOCAL_FUNCTION(arm64_err_exc_current_el_SP0)
-    eret
+    invalid_exception 3
 
 /* exceptions from current EL, using SPx */
 .org 0x200
 LOCAL_FUNCTION(arm64_sync_exc_current_el_SPx)
     regsave_long
-    adr lr, arm64_exc_shared_restore
     mov x0, sp
-    b  sync_exception
+    bl  arm64_sync_exception
+    b  arm64_exc_shared_restore
 
 .org 0x280
 LOCAL_FUNCTION(arm64_irq_current_el_SPx)
-    eret
+    invalid_exception 0x11
 
 .org 0x300
 LOCAL_FUNCTION(arm64_fiq_current_el_SPx)
-    eret
+    invalid_exception 0x12
 
 .org 0x380
 LOCAL_FUNCTION(arm64_err_exc_current_el_SPx)
-    eret
+    invalid_exception 0x13
 
 /* exceptions from lower EL, running arm64 */
 .org 0x400
 LOCAL_FUNCTION(arm64_sync_exc_lower_el_64)
-    eret
+    invalid_exception 0x20
 
 .org 0x480
 LOCAL_FUNCTION(arm64_irq_lower_el_64)
-    eret
+    invalid_exception 0x21
 
 .org 0x500
 LOCAL_FUNCTION(arm64_fiq_lower_el_64)
-    eret
+    invalid_exception 0x22
 
 .org 0x580
 LOCAL_FUNCTION(arm64_err_exc_lower_el_64)
-    eret
+    invalid_exception 0x23
 
 /* exceptions from lower EL, running arm32 */
 .org 0x600
 LOCAL_FUNCTION(arm64_sync_exc_lower_el_32)
-    eret
+    invalid_exception 0x30
 
 .org 0x680
 LOCAL_FUNCTION(arm64_irq_lower_el_32)
-    eret
+    invalid_exception 0x31
 
 .org 0x700
 LOCAL_FUNCTION(arm64_fiq_lower_el_32)
-    eret
+    invalid_exception 0x32
 
 .org 0x780
 LOCAL_FUNCTION(arm64_err_exc_lower_el_32)
-    eret
+    invalid_exception 0x33
 
 LOCAL_FUNCTION(arm64_exc_shared_restore)
     regrestore_long
