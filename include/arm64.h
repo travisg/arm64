@@ -18,3 +18,10 @@
     ISB; \
 })
 
+/* exception handling */
+struct arm64_iframe_long {
+    uint64_t r[32];
+    uint64_t elr;
+    uint64_t spsr;
+};
+
