@@ -31,8 +31,8 @@ push x4, x5
 push x2, x3
 push x0, x1
 add  x0, sp, #regsave_long_offset
-mrs  x1, elr_el3
-mrs  x2, spsr_el3
+mrs  x1, elr_el1
+mrs  x2, spsr_el1
 stp  lr, x0, [sp, #regsave_long_offset]
 stp  x1, x2, [sp, #regsave_long_offset + 16]
 .endm
@@ -40,8 +40,8 @@ stp  x1, x2, [sp, #regsave_long_offset + 16]
 .macro regrestore_long
 ldr  lr, [sp, #regsave_long_offset]
 ldp  x1, x2, [sp, #regsave_long_offset + 16]
-msr  elr_el3, x1
-msr  spsr_el3, x2
+msr  elr_el1, x1
+msr  spsr_el1, x2
 pop x0, x1
 pop x2, x3
 pop x4, x5

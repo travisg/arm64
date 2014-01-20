@@ -1,6 +1,9 @@
 #include <arm64.h>
 #include <stdio.h>
+#include <debug.h>
+#include <foundation_emu.h> // for shutdown()
 
+#define SHUTDOWN_ON_FATAL 1
 
 static void dump_iframe(const struct arm64_iframe_long *iframe)
 {
@@ -17,17 +20,45 @@ static void dump_iframe(const struct arm64_iframe_long *iframe)
     printf("spsr 0x%16lx\n", iframe->spsr);
 }
 
+static void num(uint64_t a)
+{
+    for (int i = 0; i < 16; i++) {
+        debug_putchar("0123456789abcdef"[a & 0xf]);
+        a>>=4;
+    }
+    debug_putchar('\n');
+}
+
 void arm64_sync_exception(struct arm64_iframe_long *iframe)
 {
+#if 0
+    debug_puts("sync\n");
+    num(iframe->elr);
+    num(iframe->r[31]);
+    num(ARM64_READ_SYSREG(esr_el1));
+    num(ARM64_READ_SYSREG(currentel));
+    for (;;);
+#endif
     printf("sync_exception\n");
     dump_iframe(iframe);
 
-    uint32_t esr = ARM64_READ_SYSREG(esr_el3);
+    uint32_t esr = ARM64_READ_SYSREG(esr_el1);
     uint32_t ec = esr >> 26;
     uint32_t il = (esr >> 25) & 0x1;
     uint32_t iss = esr & ((1<<24) - 1);
 
     printf("ESR 0x%x: ec 0x%x, il 0x%x, iss 0x%x\n", esr, ec, il, iss);
+
+    if (ec == 0x15) { // syscall
+        printf("syscall\n");
+        return;
+    }
+
+#if SHUTDOWN_ON_FATAL
+    shutdown();
+#else
+    for (;;);
+#endif
 }
 
 void arm64_invalid_exception(struct arm64_iframe_long *iframe, unsigned int which)
@@ -35,7 +66,11 @@ void arm64_invalid_exception(struct arm64_iframe_long *iframe, unsigned int whic
     printf("invalid exception, which 0x%u\n", which);
     dump_iframe(iframe);
 
+#if SHUTDOWN_ON_FATAL
+    shutdown();
+#else
     for (;;);
+#endif
 }
 
 

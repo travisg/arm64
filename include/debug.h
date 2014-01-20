@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define SEMIHOST_WRITEC (0x03)
 #define SEMIHOST_WRITE0 (0x04)
@@ -16,4 +17,7 @@ static inline void debug_putchar(int c)
 {
     semihost_call(SEMIHOST_WRITEC, (void *)&c);
 }
+
+void hexdump(const void *ptr, size_t len);
+void hexdump8(const void *ptr, size_t len);
 

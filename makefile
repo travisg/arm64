@@ -29,7 +29,7 @@ CFLAGS += $(COMPILEFLAGS)
 CPPFLAGS += $(COMPILEFLAGS)
 ASMFLAGS += $(COMPILEFLAGS)
 
-OBJS := test.o asm.o exceptions.o exceptions_c.o printf.o strlen.o stdio.o
+OBJS := test.o asm.o debug.o exceptions.o exceptions_c.o interrupts.o printf.o strlen.o stdio.o
 
 OBJS := $(addprefix $(BUILDDIR)/,$(OBJS))
 
@@ -52,7 +52,7 @@ spotless:
 .PHONY: run
 
 run: $(BUILDDIR)/$(TARGET)
-	./Foundation_v8 --visualization --image $<
+	./Foundation_v8 --visualization --no-gicv3 --image $<
 
 runvm: $(BUILDDIR)/$(TARGET)
 	scp $(BUILDDIR)/$(TARGET) xubuntu:.

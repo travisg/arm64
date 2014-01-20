@@ -18,10 +18,24 @@
     ISB; \
 })
 
+static inline void arch_disable_interrupts(void)
+{
+    __asm__ volatile("msr daifset, #2" ::: "memory");
+}
+
+static inline void arch_enable_interrupts(void)
+{
+    __asm__ volatile("msr daifclr, #2" ::: "memory");
+}
+
+
 /* exception handling */
 struct arm64_iframe_long {
     uint64_t r[32];
     uint64_t elr;
     uint64_t spsr;
 };
+
+extern void arm64_exception_base(void);
+
 
