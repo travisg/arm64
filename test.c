@@ -7,9 +7,6 @@
 #include <stdio.h>
 #include <arm64.h>
 
-int a_global = 0;
-int b_global = 1;
-
 void main(void)
 {
     printf("welcome to arm64!\n");
@@ -31,6 +28,7 @@ void main(void)
     printf("CPTR_EL2 0x%x\n", ARM64_READ_SYSREG(CPTR_EL2));
     printf("CPACR_EL1 0x%x\n", ARM64_READ_SYSREG(CPACR_EL1));
 
+#if 1
     unsigned int current_el = ARM64_READ_SYSREG(CURRENTEL) >> 2;
     printf("el 0x%x\n", current_el);
     printf("switching to el1\n");
@@ -44,6 +42,7 @@ void main(void)
     printf("before svc2\n");
     __asm__ volatile("svc #100");
     printf("after svc2\n");
+#endif
 
     platform_init_interrupts();
 

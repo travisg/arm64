@@ -63,7 +63,7 @@ void arm64_sync_exception(struct arm64_iframe_long *iframe)
 
 void arm64_invalid_exception(struct arm64_iframe_long *iframe, unsigned int which)
 {
-    printf("invalid exception, which 0x%u\n", which);
+    printf("invalid exception, which 0x%x\n", which);
     dump_iframe(iframe);
 
 #if SHUTDOWN_ON_FATAL

@@ -16,12 +16,16 @@ static inline void exit_critical_section(void) {}
 
 /* main cpu regs */
 #define CONTROL  (0x00)
-#define PRIMASK  (0x04)
-#define BINPOINT (0x08)
-#define INTACK   (0x0c)
-#define EOI      (0x10)
-#define RUNNING  (0x14)
-#define HIGHPEND (0x18)
+#define PMR      (0x04)
+#define BR       (0x08)
+#define IAR      (0x0c)
+#define EOIR     (0x10)
+#define RPR      (0x14)
+#define HPPIR    (0x18)
+#define ABPR     (0x1c)
+#define AIAR     (0x20)
+#define AEOIR    (0x24)
+#define AHPPIR   (0x28)
 
 /* distribution regs */
 #define DISTCONTROL (0x000)
@@ -35,15 +39,16 @@ static inline void exit_critical_section(void) {}
 #define PRIORITY    (0x400)
 #define TARGET      (0x800)
 #define CONFIG      (0xc00)
+#define NSACR       (0xe00)
 #define SGIR        (0xf00)
 
 static void gic_set_enable(uint vector, bool enable)
 {
     if (enable) {
-        uint regoff = SETENABLE + 4 * (vector / 32); // (vector < 32) ? SETENABLE0 : ((vector < 64) ? SETENABLE1 : SETENABLE2);
+        uint regoff = SETENABLE + 4 * (vector / 32);
         GICDISTREG(regoff) = (1 << (vector % 32));
     } else {
-        uint regoff = CLRENABLE + 4 * (vector / 32); // (vector < 32) ? CLRENABLE0 : ((vector < 64) ? CLRENABLE1 : CLRENABLE2);
+        uint regoff = CLRENABLE + 4 * (vector / 32);
         GICDISTREG(regoff) = (1 << (vector % 32));
     }
 }
@@ -55,55 +60,53 @@ void platform_init_interrupts(void)
     GICDISTREG(CLRENABLE) = 0xffff0000;
     GICDISTREG(SETENABLE) = 0x0000ffff;
     GICDISTREG(CLRPEND) = 0xffffffff;
-    GICDISTREG(GROUP) = 0x0;
-    GICDISTREG(PRIMASK) = 0xf0;
+    GICDISTREG(GROUP) = 0;
+    GICCPUREG(PMR) = 0xf0;
 
     for (int i = 0; i < 32 / 4; i++) {
-        GICDISTREG(PRIORITY + i * 4) = 0xa0a0a0a0;
-    }
-
-    for (int i = 32/32; i < MAX_INT / 32; i++) {
-        GICDISTREG(CLRENABLE + i * 4) = 0xffffffff;
-        GICDISTREG(CLRPEND + 4) = 0xffffffff;
-        GICDISTREG(GROUP + 4) = 0xffffffff;
+        GICDISTREG(PRIORITY + i * 4) = 0x80808080;
     }
 
     for (int i = 32/16; i < MAX_INT / 16; i++) {
-        GICDISTREG(CONFIG + i * 4) = 0;
+        GICDISTREG(NSACR + i * 4) = 0xffffffff;
     }
+    for (int i = 32/32; i < MAX_INT / 32; i++) {
+        GICDISTREG(CLRENABLE + i * 4) = 0xffffffff;
+        GICDISTREG(CLRPEND + i * 4) = 0xffffffff;
+        GICDISTREG(GROUP + i * 4) = 0xffffffff;
+    }
+
     for (int i = 32/4; i < MAX_INT / 4; i++) {
         GICDISTREG(TARGET + i * 4) = 0;
-        GICDISTREG(PRIORITY + i * 4) = 0xa0a0a0a0;
+        GICDISTREG(PRIORITY + i * 4) = 0x80808080;
     }
 
-    GICCPUREG(CONTROL) = 1; // enable GIC0
-    GICDISTREG(DISTCONTROL) = 1; // enable GIC0
+    GICDISTREG(DISTCONTROL) = 3; // enable GIC0
+    GICCPUREG(CONTROL) = (1<<3)|3; // enable GIC0
 
-    hexdump((void *)GIC_DISTRIB_BASE + 0xfd0, 0x30);
+#if 0
     hexdump((void *)GIC_PROC_BASE, 0x20);
-    hexdump((void *)GIC_PROC_BASE + 0xf0, 4);
     hexdump((void *)GIC_DISTRIB_BASE, 0x10);
-    hexdump((void *)GIC_DISTRIB_BASE + GROUP, 0x10);
-    hexdump((void *)GIC_DISTRIB_BASE + SETENABLE, 0x10);
-    hexdump((void *)GIC_DISTRIB_BASE + SETACTIVE, 0x10);
-    hexdump((void *)GIC_DISTRIB_BASE + PRIORITY, 0x40);
+    printf("config:   "); hexdump((void *)GIC_DISTRIB_BASE + CONFIG, 0x10);
+    printf("group:    "); hexdump((void *)GIC_DISTRIB_BASE + GROUP, 0x10);
+    printf("priority: "); hexdump((void *)GIC_DISTRIB_BASE + PRIORITY, 0x40);
+    printf("enable:   "); hexdump((void *)GIC_DISTRIB_BASE + SETENABLE, 0x10);
+    printf("pending:  "); hexdump((void *)GIC_DISTRIB_BASE + SETPEND, 0x10);
+    printf("active:   "); hexdump((void *)GIC_DISTRIB_BASE + SETACTIVE, 0x10);
 
     // trigger interrupt
     gic_set_enable(34, true);
-    GICDISTREG(SETPEND + 4) = (1<<2);
+    //GICDISTREG(SETPEND + 4) = (1<<2);
     //GICDISTREG(SETACTIVE + 4) = (1<<2);
     GICDISTREG(SGIR) = (2 << 24) | 3;
 
-    hexdump((void *)GIC_DISTRIB_BASE + SETENABLE, 0x10);
-    hexdump((void *)GIC_DISTRIB_BASE + SETPEND, 0x10);
-    hexdump((void *)GIC_DISTRIB_BASE + SETACTIVE, 0x10);
-    hexdump((void *)GIC_PROC_BASE, 0x20);
+    printf("ISR 0x%x\n", (uint32_t)ARM64_READ_SYSREG(isr_el1));
 
     printf("daif 0x%x\n", (uint32_t)ARM64_READ_SYSREG(daif));
     arch_enable_interrupts();
 
-    printf("ISR 0x%x\n", (uint32_t)ARM64_READ_SYSREG(isr_el1));
     printf("daif 0x%x\n", (uint32_t)ARM64_READ_SYSREG(daif));
+#endif
 }
 
 status_t mask_interrupt(unsigned int vector)
@@ -132,6 +135,26 @@ status_t unmask_interrupt(unsigned int vector)
     exit_critical_section();
 
     return NO_ERROR;
+}
+
+void platform_irq(struct arm64_iframe_long *frame)
+{
+    uint32_t iar = GICCPUREG(AIAR);
+    uint vector = iar & 0x3ff;
+
+    printf("irq %d\n", vector);
+
+    GICCPUREG(AEOIR) = iar;
+}
+
+void platform_fiq(struct arm64_iframe_long *frame)
+{
+    uint32_t iar = GICCPUREG(IAR);
+    uint vector = iar & 0x3ff;
+
+    printf("fiq %d\n", vector);
+
+    GICCPUREG(EOIR) = iar;
 }
 
 #if 0

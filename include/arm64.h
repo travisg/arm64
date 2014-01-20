@@ -20,12 +20,12 @@
 
 static inline void arch_disable_interrupts(void)
 {
-    __asm__ volatile("msr daifset, #2" ::: "memory");
+    __asm__ volatile("msr daifset, #3" ::: "memory");
 }
 
 static inline void arch_enable_interrupts(void)
 {
-    __asm__ volatile("msr daifclr, #2" ::: "memory");
+    __asm__ volatile("msr daifclr, #3" ::: "memory");
 }
 
 
