@@ -6,6 +6,8 @@
 #include <foundation_emu.h>
 #include <arm64.h>
 
+/* driver for GICv2 as implemented in Foundation v2 */
+
 static inline void enter_critical_section(void) {}
 static inline void exit_critical_section(void) {}
 
@@ -53,7 +55,7 @@ static void gic_set_enable(uint vector, bool enable)
     }
 }
 
-void platform_init_interrupts(void)
+void interrupt_init(void)
 {
     GICDISTREG(DISTCONTROL) = 0;
 
@@ -137,59 +139,39 @@ status_t unmask_interrupt(unsigned int vector)
     return NO_ERROR;
 }
 
-void platform_irq(struct arm64_iframe_long *frame)
+void _irq(struct arm64_iframe_long *frame)
 {
     uint32_t iar = GICCPUREG(AIAR);
     uint vector = iar & 0x3ff;
 
-    printf("irq %d\n", vector);
+    if (vector >= 0x3fe) {
+        // spurious
+        return;
+    }
+
+//    printf("irq %d\n", vector);
+
+    switch (vector) {
+        case INT_TIMER0:
+            timer_irq();
+            break;
+    }
 
     GICCPUREG(AEOIR) = iar;
 }
 
-void platform_fiq(struct arm64_iframe_long *frame)
+void _fiq(struct arm64_iframe_long *frame)
 {
     uint32_t iar = GICCPUREG(IAR);
     uint vector = iar & 0x3ff;
 
-    printf("fiq %d\n", vector);
+    if (vector >= 0x3fe) {
+        // spurious
+        return;
+    }
+
+//    printf("fiq %d\n", vector);
 
     GICCPUREG(EOIR) = iar;
 }
-
-#if 0
-enum handler_return platform_irq(struct arm_iframe *frame)
-{
-    // get the current vector
-    unsigned int vector = GICREG(0, INTACK) & 0x3ff;
-
-    // see if it's spurious
-    if (vector == 0x3ff) {
-        GICREG(0, EOI) = 0x3ff; // XXX is this necessary?
-        return INT_NO_RESCHEDULE;
-    }
-
-//  printf("platform_irq: spsr 0x%x, pc 0x%x, currthread %p, vector %d\n", frame->spsr, frame->pc, current_thread, vector);
-
-    // deliver the interrupt
-    enum handler_return ret;
-
-    ret = INT_NO_RESCHEDULE;
-    if (int_handler_table[vector].handler)
-        ret = int_handler_table[vector].handler(int_handler_table[vector].arg);
-
-    GICREG(0, EOI) = vector;
-
-//  printf("platform_irq: exit %d\n", ret);
-
-    KEVLOG_IRQ_EXIT(vector);
-
-    return ret;
-}
-
-void platform_fiq(struct arm_iframe *frame)
-{
-    PANIC_UNIMPLEMENTED;
-}
-#endif
 

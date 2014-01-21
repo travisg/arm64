@@ -26,6 +26,8 @@
 #define GIC_HYP_BASE      (0x2c005000)
 #define GIC_VCPU_BASE     (0x2c006000)
 
+#define INT_TIMER0      34
+
 #define MAX_INT 96
 
 /* system control registers */

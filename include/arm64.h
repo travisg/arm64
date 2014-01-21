@@ -37,5 +37,6 @@ struct arm64_iframe_long {
 };
 
 extern void arm64_exception_base(void);
+extern void arm64_el3_to_el1(void);
 
 

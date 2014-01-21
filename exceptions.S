@@ -98,14 +98,14 @@ LOCAL_FUNCTION(arm64_sync_exc_current_el_SPx)
 LOCAL_FUNCTION(arm64_irq_current_el_SPx)
     regsave_long
     mov x0, sp
-    bl  platform_irq
+    bl  _irq
     b  arm64_exc_shared_restore
 
 .org 0x300
 LOCAL_FUNCTION(arm64_fiq_current_el_SPx)
     regsave_long
     mov x0, sp
-    bl  platform_fiq
+    bl  _fiq
     b  arm64_exc_shared_restore
 
 .org 0x380

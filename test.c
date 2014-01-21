@@ -6,6 +6,8 @@
 #include <foundation_emu.h>
 #include <stdio.h>
 #include <arm64.h>
+#include <interrupts.h>
+#include <timer.h>
 
 void main(void)
 {
@@ -28,7 +30,6 @@ void main(void)
     printf("CPTR_EL2 0x%x\n", ARM64_READ_SYSREG(CPTR_EL2));
     printf("CPACR_EL1 0x%x\n", ARM64_READ_SYSREG(CPACR_EL1));
 
-#if 1
     unsigned int current_el = ARM64_READ_SYSREG(CURRENTEL) >> 2;
     printf("el 0x%x\n", current_el);
     printf("switching to el1\n");
@@ -36,6 +37,7 @@ void main(void)
     current_el = ARM64_READ_SYSREG(CURRENTEL) >> 2;
     printf("el 0x%x\n", current_el);
 
+#if 0
     printf("before svc\n");
     __asm__ volatile("svc #99");
     printf("after svc\n");
@@ -44,8 +46,19 @@ void main(void)
     printf("after svc2\n");
 #endif
 
-    platform_init_interrupts();
+    interrupt_init();
+    timer_init();
+    timer_start(10);
 
+    arch_enable_interrupts();
+
+    for (int i = 0; i < 1000000; i++) {
+        __asm__ volatile("nop");
+    }
+
+#if 0
     printf("stopping simulation\n");
     shutdown();
+#endif
+    for (;;);
 }
