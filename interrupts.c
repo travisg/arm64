@@ -75,7 +75,7 @@ void interrupt_init(void)
     for (int i = 32/32; i < MAX_INT / 32; i++) {
         GICDISTREG(CLRENABLE + i * 4) = 0xffffffff;
         GICDISTREG(CLRPEND + i * 4) = 0xffffffff;
-        GICDISTREG(GROUP + i * 4) = 0xffffffff;
+        GICDISTREG(GROUP + i * 4) = 0;
     }
 
     for (int i = 32/4; i < MAX_INT / 4; i++) {
@@ -83,8 +83,8 @@ void interrupt_init(void)
         GICDISTREG(PRIORITY + i * 4) = 0x80808080;
     }
 
-    GICDISTREG(DISTCONTROL) = 3; // enable GIC0
-    GICCPUREG(CONTROL) = (1<<3)|3; // enable GIC0
+    GICDISTREG(DISTCONTROL) = 1; // enable GIC0, IRQ only
+    GICCPUREG(CONTROL) = (0<<3)|(0<<2)||1; // enable GIC0, IRQ only, group 0 set to IRQ
 
 #if 0
     hexdump((void *)GIC_PROC_BASE, 0x20);
@@ -100,7 +100,7 @@ void interrupt_init(void)
     gic_set_enable(34, true);
     //GICDISTREG(SETPEND + 4) = (1<<2);
     //GICDISTREG(SETACTIVE + 4) = (1<<2);
-    GICDISTREG(SGIR) = (2 << 24) | 3;
+    GICDISTREG(SGIR) = (2 << 24) | 1;
 
     printf("ISR 0x%x\n", (uint32_t)ARM64_READ_SYSREG(isr_el1));
 
@@ -141,15 +141,15 @@ status_t unmask_interrupt(unsigned int vector)
 
 void _irq(struct arm64_iframe_long *frame)
 {
-    uint32_t iar = GICCPUREG(AIAR);
+    uint32_t iar = GICCPUREG(IAR);
     uint vector = iar & 0x3ff;
+
+    //printf("irq %d\n", vector);
 
     if (vector >= 0x3fe) {
         // spurious
         return;
     }
-
-//    printf("irq %d\n", vector);
 
     switch (vector) {
         case INT_TIMER0:
@@ -157,7 +157,7 @@ void _irq(struct arm64_iframe_long *frame)
             break;
     }
 
-    GICCPUREG(AEOIR) = iar;
+    GICCPUREG(EOIR) = iar;
 }
 
 void _fiq(struct arm64_iframe_long *frame)
@@ -165,12 +165,14 @@ void _fiq(struct arm64_iframe_long *frame)
     uint32_t iar = GICCPUREG(IAR);
     uint vector = iar & 0x3ff;
 
+    //printf("fiq %d\n", vector);
+
     if (vector >= 0x3fe) {
         // spurious
         return;
     }
 
-//    printf("fiq %d\n", vector);
+    shutdown();
 
     GICCPUREG(EOIR) = iar;
 }
