@@ -155,6 +155,12 @@ void _irq(struct arm64_iframe_long *frame)
         case INT_TIMER0:
             timer_irq();
             break;
+        case INT_PPI_NSPHYS_TIMER:
+            timer_irq();
+            break;
+        default:
+            printf("unhandled irq %d\n", vector);
+            shutdown();
     }
 
     GICCPUREG(EOIR) = iar;

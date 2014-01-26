@@ -19,12 +19,24 @@
 #define TIMER1_BASE     (0x1c120000)
 #define VIO_BLOCK_BASE  (0x1c130000)
 #define RTC_BASE        (0x1c170000)
+#define REFCLK_CNTControl  (0x2a430000)
+#define REFCLK_CNTRead     (0x2a800000)
+#define AP_REFCLK_CNTCTL   (0x2a810000)
+#define AP_REFCLK_CNTBASE0 (0x2a820000)
+#define AP_REFCLK_CNTBASE1 (0x2a830000)
 #define GIC_BASE          (0x2c000000)
 #define GIC_DISTRIB_BASE  (0x2c001000)
 #define GIC_PROC_BASE     (0x2c002000)
 #define GIC_PROC_HYP_BASE (0x2c004000)
 #define GIC_HYP_BASE      (0x2c005000)
 #define GIC_VCPU_BASE     (0x2c006000)
+
+/* interrupts */
+#define INT_PPI_VMAINT       (16+9)
+#define INT_PPI_HYP_TIMER    (16+10)
+#define INT_PPI_VIRT_TIMER   (16+11)
+#define INT_PPI_SPHYS_TIMER  (16+13)
+#define INT_PPI_NSPHYS_TIMER (16+14)
 
 #define INT_TIMER0      34
 

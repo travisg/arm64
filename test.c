@@ -9,6 +9,8 @@
 #include <interrupts.h>
 #include <timer.h>
 
+#define DUMPREG(x) do { printf(#x " %#llx\n", ARM64_READ_SYSREG(x)); } while (0)
+
 void main(void)
 {
     printf("welcome to arm64!\n");
@@ -20,22 +22,24 @@ void main(void)
     ARM64_WRITE_SYSREG(VBAR_EL2, (uint64_t)&arm64_exception_base);
     ARM64_WRITE_SYSREG(VBAR_EL3, (uint64_t)&arm64_exception_base);
 
-    printf("SCR_EL3 0x%x\n", ARM64_READ_SYSREG(SCR_EL3));
-    printf("SCTLR_EL1 0x%x\n", ARM64_READ_SYSREG(SCTLR_EL1));
-    printf("SCTLR_EL2 0x%x\n", ARM64_READ_SYSREG(SCTLR_EL2));
-    printf("SCTLR_EL3 0x%x\n", ARM64_READ_SYSREG(SCTLR_EL3));
-    printf("HCR_EL2 0x%x\n", ARM64_READ_SYSREG(HCR_EL2));
-    printf("HSTR_EL2 0x%x\n", ARM64_READ_SYSREG(HSTR_EL2));
-    printf("CPTR_EL3 0x%x\n", ARM64_READ_SYSREG(CPTR_EL3));
-    printf("CPTR_EL2 0x%x\n", ARM64_READ_SYSREG(CPTR_EL2));
-    printf("CPACR_EL1 0x%x\n", ARM64_READ_SYSREG(CPACR_EL1));
+    DUMPREG(SCR_EL3);
+    DUMPREG(SCTLR_EL1);
+    DUMPREG(SCTLR_EL2);
+    DUMPREG(SCTLR_EL3);
+    DUMPREG(HCR_EL2);
+    DUMPREG(HSTR_EL2);
+    DUMPREG(CPTR_EL3);
+    DUMPREG(CPTR_EL2);
+    DUMPREG(CPACR_EL1);
 
     unsigned int current_el = ARM64_READ_SYSREG(CURRENTEL) >> 2;
     printf("el 0x%x\n", current_el);
-    printf("switching to el1\n");
-    arm64_el3_to_el1();
-    current_el = ARM64_READ_SYSREG(CURRENTEL) >> 2;
-    printf("el 0x%x\n", current_el);
+    if (current_el > 1) {
+        printf("switching to el1\n");
+        arm64_el3_to_el1();
+        current_el = ARM64_READ_SYSREG(CURRENTEL) >> 2;
+        printf("el 0x%x\n", current_el);
+    }
 
 #if 0
     printf("before svc\n");
@@ -48,17 +52,14 @@ void main(void)
 
     interrupt_init();
     timer_init();
-    timer_start(10);
+    timer_start(100);
 
     arch_enable_interrupts();
 
-    for (int i = 0; i < 1000000; i++) {
-        __asm__ volatile("nop");
-    }
-
-#if 0
+#if 1
     printf("stopping simulation\n");
     shutdown();
 #endif
     for (;;);
 }
+
